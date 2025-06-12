@@ -1,0 +1,33 @@
+from flask import Flask, request, jsonify
+import joblib
+import numpy as np
+
+# Load model and scaler
+model = joblib.load("model.joblib")
+scaler = joblib.load("scaler.joblib")
+
+# Create Flask app
+app = Flask(__name__)
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    try:
+        # Get input data from request
+        data = request.json
+        input_features = np.array(data["features"]).reshape(1, -1)
+
+        # Preprocess
+        scaled_input = scaler.transform(input_features)
+
+        # Predict
+        prediction = model.predict(scaled_input)[0]
+        result = "Malignant" if prediction == 1 else "Benign"
+
+        return jsonify({"prediction": result})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+# Run the app
+if __name__ == "__main__":
+    app.run(debug=True)
